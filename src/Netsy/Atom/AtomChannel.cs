@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -11,9 +13,11 @@ namespace Netsy.Atom
     {
         private readonly AtomServer _parent;
         private readonly TcpClient _channel;
-        private readonly NetworkStream _stream;
+        private readonly Stream _stream;
         private readonly SemaphoreSlim _lock;
         private readonly Task _readFromChannelTask;
+
+        public IDictionary<string, object> Data { get; }
 
         public event EventHandler<AtomChannelMessageReceivedEventArgs> MessageReceived;
 
@@ -24,8 +28,9 @@ namespace Netsy.Atom
 
             this._parent = parent;
             this._channel = channel;
-            this._stream = this._channel.GetStream();
             this._lock = new SemaphoreSlim(1, 1);
+            this.Data = new Dictionary<string, object>();
+            this._stream = this._parent.OnChannelCreatingStream(this, this._channel.GetStream());
 
             this._readFromChannelTask = Task.Factory.StartNew(this.ReadFromChannel, TaskCreationOptions.LongRunning);
         }
@@ -38,6 +43,7 @@ namespace Netsy.Atom
 
             try
             {
+                await this._parent.OnChannelSendingMessageAsync(this, message);
                 await this._stream.WriteRawMessageAsync(message.Data);
             }
             finally
@@ -46,11 +52,11 @@ namespace Netsy.Atom
             }
         }
 
-        public void Disconnect()
+        public async Task DisconnectAsync()
         {
             if (this._channel.Connected)
             {
-                this._parent.RemoveChannel(this);
+                await this._parent.RemoveChannelAsync(this);
                 this._stream.Dispose();
                 this._channel.Dispose();
             }
@@ -66,17 +72,18 @@ namespace Netsy.Atom
 
                     if (data == null)
                     {
-                        this.Disconnect();
+                        await this.DisconnectAsync();
                         break;
                     }
 
                     var message = AtomMessage.Incoming(data);
+                    await this._parent.OnChannelMessageReceivedAsync(this, message);
                     this.MessageReceived?.Invoke(this, new AtomChannelMessageReceivedEventArgs(message));
                 }
             }
             catch
             {
-                this.Disconnect();
+                await this.DisconnectAsync();
             }
         }
     }

@@ -15,9 +15,9 @@ namespace Netsy.Tests.Playground
     {
         static async Task Main(string[] args)
         {
-            var stream = new SslStream(new MemoryStream(), leaveInnerStreamOpen: false, userCertificateValidationCallback: UserCertificateValidationCallback);
-            stream.AuthenticateAsClient("test.test");
-            stream.AuthenticateAsServer(new X509Certificate());     
+            //var stream = new SslStream(new MemoryStream(), leaveInnerStreamOpen: false, userCertificateValidationCallback: UserCertificateValidationCallback);
+            //stream.AuthenticateAsClient("test.test");
+            //stream.AuthenticateAsServer(new X509Certificate());     
 
 
             var server = new AtomServer(new IPEndPoint(IPAddress.Any, 1337));

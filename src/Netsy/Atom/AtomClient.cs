@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Netsy.Atom.Extensibility;
 using Netsy.Extensions;
 
 namespace Netsy.Atom
@@ -13,23 +15,28 @@ namespace Netsy.Atom
     {
         private readonly SemaphoreSlim _lock;
 
+        private readonly IAtomClientPlugin _plugin;
         private TcpClient _client;
-        private NetworkStream _stream;
+        private Stream _stream;
         private Task _readFromClientTask;
 
         public IPEndPoint Address { get; }
         public AtomClientState State { get; private set; }
+        public IDictionary<string, object> Data { get; }
 
         public event EventHandler<AtomClientMessageReceivedEventArgs> MessageReceived;
 
-        public AtomClient(IPEndPoint address)
+        public AtomClient(IPEndPoint address, IAtomClientPlugin plugin = null)
         {
             Guard.NotNull(address, nameof(address));
 
             this.Address = address;
             this.State = AtomClientState.Disconnected;
-
+            this.Data = new Dictionary<string, object>();
+            this._plugin = plugin ?? new NullAtomClientPlugin();
             this._lock = new SemaphoreSlim(1, 1);
+
+            this._plugin.OnAppliedToClient(this);
         }
 
         public async Task ConnectAsync()
@@ -41,15 +48,17 @@ namespace Netsy.Atom
                     return;
 
                 this.State = AtomClientState.Connecting;
+                await this._plugin.OnConnectingAsync();
 
                 var client = new TcpClient();
                 client.Connect(this.Address);
 
                 this._client = client;
-                this._stream = client.GetStream();
+                this._stream =  this._plugin.OnCreatingStream(client.GetStream());
                 this._readFromClientTask = Task.Factory.StartNew(this.ReadFromClient, TaskCreationOptions.LongRunning);
 
                 this.State = AtomClientState.Connected;
+                await this._plugin.OnConnectedAsync();
             }
             catch (Exception exception)
             {
@@ -74,6 +83,7 @@ namespace Netsy.Atom
                     return;
 
                 this.State = AtomClientState.Disconnecting;
+                await this._plugin.OnDisconnectingAsync();
 
                 this._stream.Dispose();
                 this._stream = null;
@@ -84,6 +94,7 @@ namespace Netsy.Atom
                 this._readFromClientTask = null;
 
                 this.State = AtomClientState.Disconnected;
+                await this._plugin.OnDisconnectedAsync();
             }
             catch (Exception exception)
             {
@@ -106,6 +117,7 @@ namespace Netsy.Atom
 
             try
             {
+                await this._plugin.OnSendingMessageAsync(message);
                 await this._stream.WriteRawMessageAsync(message.Data);
             }
             finally
@@ -129,6 +141,7 @@ namespace Netsy.Atom
                     }
 
                     var message = AtomMessage.Incoming(data);
+                    await this._plugin.OnMessageReceivedAsync(message);
                     this.MessageReceived?.Invoke(this, new AtomClientMessageReceivedEventArgs(message));
                 }
             }

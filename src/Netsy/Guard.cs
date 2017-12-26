@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Reflection;
+using Netsy.Atom.Extensibility;
 
 namespace Netsy
 {
@@ -31,6 +33,16 @@ namespace Netsy
 
             if (Enum.IsDefined(argument.GetType(), argument) == false)
                 throw new ArgumentException("Unknown enum value.", argumentName);
+        }
+
+        [DebuggerStepThrough]
+        public static void NotNullOrEmpty(IEnumerable argument, string argumentName)
+        {
+            if (argument == null)
+                throw new ArgumentNullException(argumentName);
+
+            if (argument.GetEnumerator().MoveNext() == false)
+                throw new ArgumentException("List is empty.", argumentName);
         }
     }
 }
