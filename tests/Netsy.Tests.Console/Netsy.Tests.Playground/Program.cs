@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Netsy.Atom;
@@ -12,6 +15,11 @@ namespace Netsy.Tests.Playground
     {
         static async Task Main(string[] args)
         {
+            var stream = new SslStream(new MemoryStream(), leaveInnerStreamOpen: false, userCertificateValidationCallback: UserCertificateValidationCallback);
+            stream.AuthenticateAsClient("test.test");
+            stream.AuthenticateAsServer(new X509Certificate());     
+
+
             var server = new AtomServer(new IPEndPoint(IPAddress.Any, 1337));
             server.ChannelConnected += ServerOnChannelConnected;
             server.ChannelDisconnected += ServerOnChannelDisconnected;
@@ -19,42 +27,53 @@ namespace Netsy.Tests.Playground
             await server.StartAsync();
 
             var client = new AtomClient(new IPEndPoint(IPAddress.Loopback, 1337));
+            client.MessageReceived += ClientOnMessageReceived;
             await client.ConnectAsync();
 
-            Console.ReadLine();
+            while (true)
+            {
+                var data = Encoding.UTF8.GetBytes(Console.ReadLine());
+                var message = AtomMessage.FromData(data);
 
-            //client.Test();
-            //client.Test();
-            //client.Test();
-            //client.Test();
-            //client.Test();
-            //client.Test();
-            //client.Test();
-
-            await client.DisconnectAsync();
+                await client.SendMessageAsync(message);
+            }
+            
+            //await client.DisconnectAsync();
 
             Console.ReadLine();
+        }
+
+        private static bool UserCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
+        }
+
+        private static void ClientOnMessageReceived(object sender, AtomClientMessageReceivedEventArgs e)
+        {
+            var message = Encoding.UTF8.GetString(e.Message.Data);
+            Console.WriteLine("CLIENT: " + message);
         }
 
         private static void ServerOnChannelConnected(object sender, AtomChannelConnectedEventArgs e)
         {
             Console.WriteLine("Client Connected!");
-            //e.Channel.Disconnect();
 
-            //e.Channel.MessageReceived += ChannelOnMessageReceived;
+            e.Channel.MessageReceived += ChannelOnMessageReceived;
         }
         private static void ServerOnChannelDisconnected(object sender, AtomChannelDisconnectedEventArgs e)
         {
-            e.Channel.MessageReceived -= ChannelOnMessageReceived;
             Console.WriteLine("Client Disconnected!");
+
+            e.Channel.MessageReceived -= ChannelOnMessageReceived;
         }
 
-        private static void ChannelOnMessageReceived(object sender, AtomChannelMessageReceivedEventArgs e)
+        private static async void ChannelOnMessageReceived(object sender, AtomChannelMessageReceivedEventArgs e)
         {
-            Console.WriteLine("Message Received!");
             var message = Encoding.UTF8.GetString(e.Message.Data);
-            Console.WriteLine(message);
-        }
+            Console.WriteLine("SERVER: " + message);
 
+            var channel = (AtomChannel) sender;
+            await channel.SendMessageAsync(e.Message);
+        }
     }
 }

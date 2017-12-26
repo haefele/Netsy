@@ -39,7 +39,7 @@ namespace Netsy.Atom
 
             try
             {
-                if (this.State.CanBeStarted() == false)
+                if (this.State.CanStart() == false)
                     return;
 
                 this.State = AtomServerState.Starting;
@@ -71,7 +71,7 @@ namespace Netsy.Atom
 
             try
             {
-                if (this.State.CanBeStopped() == false)
+                if (this.State.CanStop() == false)
                     return;
 
                 this.State = AtomServerState.Stopping;

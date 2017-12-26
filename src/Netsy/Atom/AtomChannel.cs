@@ -27,30 +27,6 @@ namespace Netsy.Atom
             this._readFromChannelTask = Task.Factory.StartNew(this.ReadFromChannel, TaskCreationOptions.LongRunning);
         }
 
-        private async void ReadFromChannel()
-        {
-            try
-            {
-                while (this._channel.Connected)
-                {
-                    var data = await this._stream.ReadRawMessageAsync();
-
-                    if (data == null)
-                    {
-                        this.Disconnect();
-                        break;
-                    }
-
-                    var message = AtomMessage.Incoming(data);
-                    this.MessageReceived?.Invoke(this, new AtomChannelMessageReceivedEventArgs(message));
-                }
-            }
-            catch
-            {
-                this.Disconnect();
-            }
-        }
-
         public async Task SendMessageAsync(AtomMessage message)
         {
             await this._lock.WaitAsync();
@@ -72,6 +48,30 @@ namespace Netsy.Atom
                 this._parent.RemoveChannel(this);
                 this._stream.Dispose();
                 this._channel.Dispose();
+            }
+        }
+
+        private async void ReadFromChannel()
+        {
+            try
+            {
+                while (this._channel.Connected)
+                {
+                    var data = await this._stream.ReadRawMessageAsync();
+
+                    if (data == null)
+                    {
+                        this.Disconnect();
+                        break;
+                    }
+
+                    var message = AtomMessage.Incoming(data);
+                    this.MessageReceived?.Invoke(this, new AtomChannelMessageReceivedEventArgs(message));
+                }
+            }
+            catch
+            {
+                this.Disconnect();
             }
         }
     }
