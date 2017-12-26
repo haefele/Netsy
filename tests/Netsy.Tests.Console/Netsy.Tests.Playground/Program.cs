@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -8,6 +9,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Netsy.Atom;
+using Netsy.Atom.Extensibility;
 
 namespace Netsy.Tests.Playground
 {
@@ -15,18 +17,23 @@ namespace Netsy.Tests.Playground
     {
         static async Task Main(string[] args)
         {
-            //var stream = new SslStream(new MemoryStream(), leaveInnerStreamOpen: false, userCertificateValidationCallback: UserCertificateValidationCallback);
-            //stream.AuthenticateAsClient("test.test");
-            //stream.AuthenticateAsServer(new X509Certificate());     
+            var certificateSubject = "desktop-haefele";
+        
+            var certificateStore = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+            certificateStore.Open(OpenFlags.ReadOnly);
 
+            var certificate = certificateStore.Certificates
+                .Find(X509FindType.FindBySubjectName, certificateSubject, false)
+                .Cast<X509Certificate2>()
+                .ToList();
 
-            var server = new AtomServer(new IPEndPoint(IPAddress.Any, 1337));
+            var server = new AtomServer(new IPEndPoint(IPAddress.Any, 1337), new SslAtomServerPlugin(certificate.FirstOrDefault()));
             server.ChannelConnected += ServerOnChannelConnected;
             server.ChannelDisconnected += ServerOnChannelDisconnected;
 
             await server.StartAsync();
 
-            var client = new AtomClient(new IPEndPoint(IPAddress.Loopback, 1337));
+            var client = new AtomClient(new IPEndPoint(IPAddress.Loopback, 1337), new SslAtomClientPlugin(certificateSubject));
             client.MessageReceived += ClientOnMessageReceived;
             await client.ConnectAsync();
 
@@ -42,12 +49,7 @@ namespace Netsy.Tests.Playground
 
             Console.ReadLine();
         }
-
-        private static bool UserCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-        {
-            return true;
-        }
-
+        
         private static void ClientOnMessageReceived(object sender, AtomClientMessageReceivedEventArgs e)
         {
             var message = Encoding.UTF8.GetString(e.Message.Data);
