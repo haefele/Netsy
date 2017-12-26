@@ -8,6 +8,8 @@ namespace Netsy.Atom
 
         public AtomChannelMessageReceivedEventArgs(AtomMessage message)
         {
+            Guard.NotNull(message, nameof(message));
+
             this.Message = message;
         }
     }

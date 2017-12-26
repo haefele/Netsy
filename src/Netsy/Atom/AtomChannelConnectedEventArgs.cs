@@ -8,6 +8,8 @@ namespace Netsy.Atom
 
         public AtomChannelConnectedEventArgs(AtomChannel channel)
         {
+            Guard.NotNull(channel, nameof(channel));
+
             this.Channel = channel;
         }
     }

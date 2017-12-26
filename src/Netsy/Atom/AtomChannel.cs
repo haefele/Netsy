@@ -19,6 +19,9 @@ namespace Netsy.Atom
 
         internal AtomChannel(AtomServer parent, TcpClient channel)
         {
+            Guard.NotNull(parent, nameof(parent));
+            Guard.NotNull(channel, nameof(channel));
+
             this._parent = parent;
             this._channel = channel;
             this._stream = this._channel.GetStream();
@@ -29,6 +32,8 @@ namespace Netsy.Atom
 
         public async Task SendMessageAsync(AtomMessage message)
         {
+            Guard.NotNull(message, nameof(message));
+
             await this._lock.WaitAsync();
 
             try

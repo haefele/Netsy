@@ -24,6 +24,8 @@ namespace Netsy.Atom
 
         public AtomClient(IPEndPoint address)
         {
+            Guard.NotNull(address, nameof(address));
+
             this.Address = address;
             this.State = AtomClientState.Disconnected;
 
@@ -98,6 +100,8 @@ namespace Netsy.Atom
 
         public async Task SendMessageAsync(AtomMessage message)
         {
+            Guard.NotNull(message, nameof(message));
+
             await this._lock.WaitAsync();
 
             try

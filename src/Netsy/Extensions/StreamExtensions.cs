@@ -8,6 +8,9 @@ namespace Netsy.Extensions
     {
         public static async Task WriteRawMessageAsync(this Stream self, byte[] data)
         {
+            Guard.NotNull(self, nameof(self));
+            Guard.NotNull(data, nameof(data));
+
             var length = BitConverter.GetBytes(data.Length);
             await self.WriteAsync(length, 0, length.Length);
             await self.WriteAsync(data, 0, data.Length);
@@ -15,6 +18,8 @@ namespace Netsy.Extensions
 
         public static async Task<byte[]> ReadRawMessageAsync(this Stream self)
         {
+            Guard.NotNull(self, nameof(self));
+
             var lengthAsBytes = await self.ReadDataAsync(4);
 
             if (lengthAsBytes == null)
@@ -26,6 +31,8 @@ namespace Netsy.Extensions
 
         public static async Task<byte[]> ReadDataAsync(this Stream self, int length)
         {
+            Guard.NotNull(self, nameof(self));
+
             var result = new byte[length];
 
             int read = 0;

@@ -27,6 +27,8 @@ namespace Netsy.Atom
 
         public AtomServer(IPEndPoint address)
         {
+            Guard.NotNull(address, nameof(address));
+
             this.Address = address;
             this.State = AtomServerState.Stopped;
             this._channels = new ConcurrentDictionary<Guid, AtomChannel>();
@@ -102,6 +104,8 @@ namespace Netsy.Atom
 
         internal void RemoveChannel(AtomChannel channel)
         {
+            Guard.NotNull(channel, nameof(channel));
+
             var pair = this._channels.FirstOrDefault(f => f.Value == channel);
 
             if (pair.Key == default)

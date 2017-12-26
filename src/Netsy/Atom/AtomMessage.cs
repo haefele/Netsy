@@ -9,6 +9,8 @@ namespace Netsy.Atom
         #region Factory Methods
         internal static AtomMessage Incoming(byte[] data)
         {
+            Guard.NotNull(data, nameof(data));
+
             return new AtomMessage
             {
                 Data = data
@@ -17,6 +19,8 @@ namespace Netsy.Atom
 
         public static AtomMessage FromData(byte[] data)
         {
+            Guard.NotNull(data, nameof(data));
+
             return new AtomMessage
             {
                 Data = data
