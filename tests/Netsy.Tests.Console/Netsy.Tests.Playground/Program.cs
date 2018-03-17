@@ -34,6 +34,12 @@ namespace Netsy.Tests.Playground
             await server.StartAsync();
 
             var client = new AtomClient(new IPEndPoint(IPAddress.Loopback, 1337), new SslAtomClientPlugin(certificateSubject));
+            //var netsyClient = new NetsyClient(client, null);
+            //netsyClient.OnRequestReceived((object o) =>
+            //{
+            //    return "swag";
+            //});
+
             client.MessageReceived += ClientOnMessageReceived;
             await client.ConnectAsync();
 
