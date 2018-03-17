@@ -130,7 +130,7 @@ namespace Netsy.Atom
         {
             try
             {
-                while (this._client.Connected)
+                while (this._client != null && this._client.Connected && this._stream != null)
                 {
                     var data = await this._stream.ReadRawMessageAsync();
 
