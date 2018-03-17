@@ -151,12 +151,12 @@ namespace Netsy.Atom
             return this._plugin.OnChannelSendingMessageAsync(channel, message);
         }
 
-        public Task OnChannelMessageReceivedAsync(AtomChannel channel, AtomMessage message)
+        internal Task OnChannelMessageReceivedAsync(AtomChannel channel, AtomMessage message)
         {
             return this._plugin.OnChannelMessageReceivedAsync(channel, message);
         }
 
-        public Stream OnChannelCreatingStream(AtomChannel channel, Stream stream)
+        internal Stream OnChannelCreatingStream(AtomChannel channel, Stream stream)
         {
             return this._plugin.OnChannelCreatingStream(channel, stream);
         }
