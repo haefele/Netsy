@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Netsy\Netsy.csproj" />
+    <ProjectReference Include="..\..\src\Netsy\Netsy.csproj" />
   </ItemGroup>
 
 </Project>

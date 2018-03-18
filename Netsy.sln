@@ -7,15 +7,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C62467F0-8E3
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solution items", "solution items", "{8EB94B1E-5054-4263-87E5-BEAB0057BABE}"
 	ProjectSection(SolutionItems) = preProject
+		appveyor.yml = appveyor.yml
 		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Netsy", "src\Netsy\Netsy.csproj", "{6B8D790D-B68D-4EEB-81D8-2D213A9AC9CF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netsy", "src\Netsy\Netsy.csproj", "{6B8D790D-B68D-4EEB-81D8-2D213A9AC9CF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{EDA3800A-2CDC-4E32-BA82-906E41E119E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Netsy.Tests.Playground", "tests\Netsy.Tests.Console\Netsy.Tests.Playground\Netsy.Tests.Playground.csproj", "{478F4873-03E1-4E21-81B8-F27F1B7CCB5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netsy.Tests.Playground", "tests\Netsy.Tests.Playground\Netsy.Tests.Playground.csproj", "{478F4873-03E1-4E21-81B8-F27F1B7CCB5F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{4480CB09-4C7C-4F4F-9A70-1D0BBF4E2C70}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\build.cake = scripts\build.cake
+		scripts\build.ps1 = scripts\build.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
