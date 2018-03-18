@@ -44,5 +44,12 @@ namespace Netsy
             if (argument.GetEnumerator().MoveNext() == false)
                 throw new ArgumentException("List is empty.", argumentName);
         }
+
+        [DebuggerStepThrough]
+        public static void NotInvalidGuid(Guid argument, string argumentName)
+        {
+            if (argument == Guid.Empty)
+                throw new ArgumentException("Invalid guid", argumentName);
+        }
     }
 }

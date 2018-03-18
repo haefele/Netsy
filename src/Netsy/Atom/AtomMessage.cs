@@ -2,7 +2,7 @@
 
 namespace Netsy.Atom
 {
-    public class AtomMessage
+    public struct AtomMessage
     {
         public byte[] Data { get; private set; }
 
@@ -25,11 +25,6 @@ namespace Netsy.Atom
             {
                 Data = data
             };
-        }
-
-        private AtomMessage()
-        {
-
         }
         #endregion
     }

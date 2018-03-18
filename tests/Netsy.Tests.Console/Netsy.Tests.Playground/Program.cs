@@ -69,19 +69,21 @@ namespace Netsy.Tests.Playground
                 .ToList();
 
             var server = new NetsyServer(new IPEndPoint(IPAddress.Any, 1337), new NewtonsoftJsonPackageSerializer(), new SslAtomServerPlugin(certificate.FirstOrDefault()));
+            server.ChannelConnected += ServerOnChannelConnected;
+            server.ChannelDisconnected += ServerOnChannelDisconnected;
             server.OnPackageReceived((TextPackage package) =>
             {
                 Console.WriteLine($"Received TextMessage! {package.Text}");
             });
-            server.OnRequestReceived((AddNumbersRequest request) =>
+            server.OnRequestReceived(async (AddNumbersRequest request) =>
             {
+                await Task.Delay(TimeSpan.FromMilliseconds(100));
+
                 return new AddNumbersResponse
                 {
                     Result = request.Number1 + request.Number2
                 };
             });
-            //server.ChannelConnected += ServerOnChannelConnected;
-            //server.ChannelDisconnected += ServerOnChannelDisconnected;
 
             await server.StartAsync();
 
@@ -94,7 +96,6 @@ namespace Netsy.Tests.Playground
                 };
             });
 
-            //client.MessageReceived += ClientOnMessageReceived;
             await client.ConnectAsync();
             
             while (true)
@@ -107,8 +108,6 @@ namespace Netsy.Tests.Playground
                 });
                 watch.Stop();
                 Console.WriteLine(watch.Elapsed);
-
-                Console.ReadLine();
             }
             
             await client.DisconnectAsync();
@@ -122,26 +121,13 @@ namespace Netsy.Tests.Playground
             Console.WriteLine("CLIENT: " + message);
         }
 
-        private static void ServerOnChannelConnected(object sender, AtomChannelConnectedEventArgs e)
+        private static void ServerOnChannelConnected(object sender, NetsyChannelConnectedEventArgs e)
         {
             Console.WriteLine("Client Connected!");
-
-            e.Channel.MessageReceived += ChannelOnMessageReceived;
         }
-        private static void ServerOnChannelDisconnected(object sender, AtomChannelDisconnectedEventArgs e)
+        private static void ServerOnChannelDisconnected(object sender, NetsyChannelDisconnectedEventArgs e)
         {
             Console.WriteLine("Client Disconnected!");
-
-            e.Channel.MessageReceived -= ChannelOnMessageReceived;
-        }
-
-        private static async void ChannelOnMessageReceived(object sender, AtomChannelMessageReceivedEventArgs e)
-        {
-            var message = Encoding.UTF8.GetString(e.Message.Data);
-            Console.WriteLine("SERVER: " + message);
-
-            var channel = (AtomChannel) sender;
-            await channel.SendMessageAsync(e.Message);
         }
     }
 }

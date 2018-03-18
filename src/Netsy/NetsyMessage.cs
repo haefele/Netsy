@@ -11,21 +11,30 @@ namespace Netsy
 
         public static NetsyMessage Package(byte[] data)
         {
+            Guard.NotNullOrEmpty(data, nameof(data));
+
             return new NetsyMessage(data, NetsyMessageKind.SendPackage, Guid.Empty);
         }
 
         public static NetsyMessage Request(byte[] data)
         {
+            Guard.NotNullOrEmpty(data, nameof(data));
+
             return new NetsyMessage(data, NetsyMessageKind.Request, Guid.NewGuid());
         }
 
         public static NetsyMessage ResponseFor(byte[] data, Guid requestId)
         {
+            Guard.NotNullOrEmpty(data, nameof(data));
+            Guard.NotInvalidGuid(requestId, nameof(requestId));
+
             return new NetsyMessage(data, NetsyMessageKind.Response, requestId);
         }
 
         public static NetsyMessage FromAtomMessage(byte[] data)
         {
+            Guard.NotNullOrEmpty(data, nameof(data));
+
             var kind = (NetsyMessageKind) data[0];
 
             var requestId = Guid.Empty;
@@ -51,6 +60,10 @@ namespace Netsy
 
         private NetsyMessage(byte[] data, NetsyMessageKind kind, Guid requestId)
         {
+            Guard.NotNullOrEmpty(data, nameof(data));
+            Guard.NotInvalidEnum(kind, nameof(kind));
+            //requestId can be the default value
+
             this.Data = data;
             this.Kind = kind;
             this.RequestId = requestId;
