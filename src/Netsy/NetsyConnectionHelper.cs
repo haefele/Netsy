@@ -47,8 +47,9 @@ namespace Netsy
             return await result.Task;
         }
 
-        public async Task HandleAtomMessage(AtomMessage atomMessage)
+        public async Task HandleAtomMessage(NetsyChannel channel, AtomMessage atomMessage)
         {
+            //channel can be null
             Guard.NotNull(atomMessage, nameof(atomMessage));
 
             var netsyMessage = NetsyMessage.FromAtomMessage(atomMessage.Data);
@@ -57,11 +58,11 @@ namespace Netsy
             switch (netsyMessage.Kind)
             {
                 case NetsyMessageKind.SendPackage:
-                    this._handlerRegistry.HandlePackage(package);
+                    this._handlerRegistry.HandlePackage(channel, package);
                     break;
 
                 case NetsyMessageKind.Request:
-                    var (success, response) = await this._handlerRegistry.HandleIncomingRequest(package);
+                    var (success, response) = await this._handlerRegistry.HandleIncomingRequest(channel, package);
                     if (success)
                     {
                         var responseData = this._packageSerializer.Serialize(response);
@@ -90,36 +91,48 @@ namespace Netsy
         #region Handler Registry
         internal class HandlerRegistry
         {
-            private readonly ConcurrentDictionary<Type, ConcurrentBag<Action<object>>> _packageHandlers;
+            private readonly ConcurrentDictionary<Type, ConcurrentBag<Action<NetsyChannel, object>>> _packageHandlers;
             private readonly ConcurrentDictionary<Guid, Action<object>> _outgoingRequests;
-            private readonly ConcurrentDictionary<Type, Func<object, Task<object>>> _incomingRequestHandlers;
+            private readonly ConcurrentDictionary<Type, Func<NetsyChannel, object, Task<object>>> _incomingRequestHandlers;
 
             public HandlerRegistry()
             {
-                this._packageHandlers = new ConcurrentDictionary<Type, ConcurrentBag<Action<object>>>();
+                this._packageHandlers = new ConcurrentDictionary<Type, ConcurrentBag<Action<NetsyChannel, object>>>();
                 this._outgoingRequests = new ConcurrentDictionary<Guid, Action<object>>();
-                this._incomingRequestHandlers = new ConcurrentDictionary<Type, Func<object, Task<object>>>();
+                this._incomingRequestHandlers = new ConcurrentDictionary<Type, Func<NetsyChannel, object, Task<object>>>();
             }
 
             public void OnPackageReceived<T>(Action<T> handler)
             {
+                this.OnPackageReceived((NetsyChannel _, T package) => handler(package));
+            }
+            public void OnPackageReceived<T>(Action<NetsyChannel, T> handler)
+            {
                 Guard.NotNull(handler, nameof(handler));
 
-                this._packageHandlers.GetOrAdd(typeof(T), _ => new ConcurrentBag<Action<object>>()).Add(f => handler((T)f));
+                this._packageHandlers.GetOrAdd(typeof(T), _ => new ConcurrentBag<Action<NetsyChannel, object>>()).Add((channel, package) => handler(channel, (T)package));
             }
 
             public void OnRequestReceived<TRequest, TResponse>(Func<TRequest, TResponse> handler)
             {
+                this.OnRequestReceived((NetsyChannel _, TRequest request) => handler(request));
+            }
+            public void OnRequestReceived<TRequest, TResponse>(Func<NetsyChannel, TRequest, TResponse> handler)
+            {
                 Guard.NotNull(handler, nameof(handler));
 
-                this.OnRequestReceived<TRequest, TResponse>(f => Task.FromResult(handler(f)));
+                this.OnRequestReceived<TRequest, TResponse>((channel, package) => Task.FromResult(handler(channel, package)));
             }
 
             public void OnRequestReceived<TRequest, TResponse>(Func<TRequest, Task<TResponse>> handler)
             {
+                this.OnRequestReceived((NetsyChannel _, TRequest request) => handler(request));
+            }
+            public void OnRequestReceived<TRequest, TResponse>(Func<NetsyChannel, TRequest, Task<TResponse>> handler)
+            {
                 Guard.NotNull(handler, nameof(handler));
 
-                Func<object, Task<object>> wrappedHandler = async f => (object)(await handler((TRequest)f));
+                Func<NetsyChannel, object, Task<object>> wrappedHandler = async (channel, request) => (object)(await handler(channel, (TRequest)request));
                 this._incomingRequestHandlers.AddOrUpdate(typeof(TRequest), wrappedHandler, (_, __) => wrappedHandler);
             }
 
@@ -131,7 +144,7 @@ namespace Netsy
                 this._outgoingRequests.AddOrUpdate(requestId, responseHandler, (_, __) => responseHandler);
             }
 
-            public void HandlePackage(object package)
+            public void HandlePackage(NetsyChannel channel, object package)
             {
                 Guard.NotNull(package, nameof(package));
 
@@ -139,18 +152,18 @@ namespace Netsy
                 {
                     foreach (var handler in handlers)
                     {
-                        handler.Invoke(package);
+                        handler.Invoke(channel, package);
                     }
                 }
             }
 
-            public async Task<(bool, object)> HandleIncomingRequest(object package)
+            public async Task<(bool, object)> HandleIncomingRequest(NetsyChannel channel, object package)
             {
                 Guard.NotNull(package, nameof(package));
 
                 if (this._incomingRequestHandlers.TryGetValue(package.GetType(), out var handler))
                 {
-                    var result = await handler(package);
+                    var result = await handler(channel, package);
                     return (true, result);
                 }
 

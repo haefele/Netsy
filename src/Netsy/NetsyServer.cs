@@ -52,21 +52,21 @@ namespace Netsy
             return this._atomServer.StopAsync();
         }
 
-        public void OnPackageReceived<T>(Action<T> handler)
+        public void OnPackageReceived<T>(Action<NetsyChannel, T> handler)
         {
             Guard.NotNull(handler, nameof(handler));
 
             this._handlerRegistry.OnPackageReceived(handler);
         }
 
-        public void OnRequestReceived<TRequest, TResponse>(Func<TRequest, TResponse> handler)
+        public void OnRequestReceived<TRequest, TResponse>(Func<NetsyChannel, TRequest, TResponse> handler)
         {
             Guard.NotNull(handler, nameof(handler));
 
             this._handlerRegistry.OnRequestReceived(handler);
         }
 
-        public void OnRequestReceived<TRequest, TResponse>(Func<TRequest, Task<TResponse>> handler)
+        public void OnRequestReceived<TRequest, TResponse>(Func<NetsyChannel, TRequest, Task<TResponse>> handler)
         {
             Guard.NotNull(handler, nameof(handler));
 

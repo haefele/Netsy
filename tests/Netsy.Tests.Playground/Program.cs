@@ -71,11 +71,11 @@ namespace Netsy.Tests.Playground
             var server = new NetsyServer(new IPEndPoint(IPAddress.Any, 1337), new NewtonsoftJsonPackageSerializer(), new SslAtomServerPlugin(certificate.FirstOrDefault()));
             server.ChannelConnected += ServerOnChannelConnected;
             server.ChannelDisconnected += ServerOnChannelDisconnected;
-            server.OnPackageReceived((TextPackage package) =>
+            server.OnPackageReceived((NetsyChannel channel, TextPackage package) =>
             {
                 Console.WriteLine($"Received TextMessage! {package.Text}");
             });
-            server.OnRequestReceived(async (AddNumbersRequest request) =>
+            server.OnRequestReceived(async (NetsyChannel channel, AddNumbersRequest request) =>
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(100));
 
@@ -101,7 +101,7 @@ namespace Netsy.Tests.Playground
             while (true)
             {
                 var watch = Stopwatch.StartNew();
-                var response = await server.Channels.First().SendRequestAsync<AddNumbersResponse>(new AddNumbersRequest
+                var response = await client.SendRequestAsync<AddNumbersResponse>(new AddNumbersRequest
                 {
                     Number1 = 2,
                     Number2 = 4

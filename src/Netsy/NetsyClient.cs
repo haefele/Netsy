@@ -83,7 +83,7 @@ namespace Netsy
 
         private async void AtomClientOnMessageReceived(object sender, AtomClientMessageReceivedEventArgs e)
         {
-            await this._connectionHelper.HandleAtomMessage(e.Message);
+            await this._connectionHelper.HandleAtomMessage(null, e.Message);
         }
     }
 }

@@ -46,7 +46,7 @@ namespace Netsy
 
         private async void AtomChannelOnMessageReceived(object sender, AtomChannelMessageReceivedEventArgs e)
         {
-            await this._connectionHelper.HandleAtomMessage(e.Message);
+            await this._connectionHelper.HandleAtomMessage(this, e.Message);
         }
     }
 }
