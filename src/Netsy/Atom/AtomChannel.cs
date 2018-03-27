@@ -46,6 +46,10 @@ namespace Netsy.Atom
                 await this._parent.OnChannelSendingMessageAsync(this, message);
                 await this._stream.WriteRawMessageAsync(message.Data);
             }
+            catch
+            {
+                await this.DisconnectAsync();
+            }
             finally
             {
                 this._lock.Release();

@@ -120,6 +120,10 @@ namespace Netsy.Atom
                 await this._plugin.OnSendingMessageAsync(message);
                 await this._stream.WriteRawMessageAsync(message.Data);
             }
+            catch
+            {
+                await this.DisconnectAsync();
+            }
             finally
             {
                 this._lock.Release();
